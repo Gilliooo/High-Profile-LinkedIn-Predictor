@@ -1,0 +1,12 @@
+streamlit>=1.30
+
+# NLP & ML
+torch
+transformers
+scikit-learn
+numpy
+pandas
+joblib
+
+# Utilities
+regex
