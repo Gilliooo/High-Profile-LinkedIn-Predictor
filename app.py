@@ -11,18 +11,49 @@ st.title("📝 User Profile Analysis")
 st.write("Fill in the profile details below.")
 
 # --------------------------------------------------
-# Load Models (Cached)
+# Load Models (Cached, one resource per step)
 # --------------------------------------------------
 @st.cache_resource
-def load_models():
-    tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
+def load_tokenizer():
+    return DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
+
+@st.cache_resource
+def load_bert():
     bert = DistilBertModel.from_pretrained("distilbert-base-uncased")
-    clf = joblib.load("models/HLP_potential_model.joblib")
     bert.eval()
+    return bert
+
+@st.cache_resource
+def load_classifier():
+    return joblib.load("models/HLP_potential_model.joblib")
+
+def load_models_with_progress():
+    """Show a detailed loading screen while the models are being prepared."""
+    with st.status("Preparing the profile analyzer…", expanded=True) as status:
+        st.write("📥 Loading the DistilBERT tokenizer…")
+        tokenizer = load_tokenizer()
+
+        st.write("🧠 Loading the DistilBERT language model — "
+                 "the first run downloads it (~260 MB), so this can take a moment…")
+        bert = load_bert()
+
+        st.write("🎯 Loading the high-level-position classifier…")
+        clf = load_classifier()
+
+        status.update(label="✅ Models ready — fill in the profile below.",
+                      state="complete", expanded=False)
     return tokenizer, bert, clf
 
-with st.spinner("Loading models..."):
-    tokenizer, bert_model, clf_model = load_models()
+# Show the full loading screen only on the first load. Streamlit reruns the
+# script on every interaction, but the cached loaders return instantly after
+# the first time, so there's no need to re-render the screen.
+if not st.session_state.get("models_loaded"):
+    tokenizer, bert_model, clf_model = load_models_with_progress()
+    st.session_state.models_loaded = True
+else:
+    tokenizer = load_tokenizer()
+    bert_model = load_bert()
+    clf_model = load_classifier()
 
 # --------------------------------------------------
 # Embedding Helper
