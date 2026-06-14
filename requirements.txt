@@ -1,6 +1,9 @@
 streamlit>=1.30
 
 # NLP & ML
+# Use the CPU-only build of torch so the Streamlit Cloud build stays small
+# and fast (the default wheel pulls in multi-GB CUDA packages).
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch
 transformers
 scikit-learn
